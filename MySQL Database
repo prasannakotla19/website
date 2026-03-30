@@ -1,0 +1,49 @@
+CREATE DATABASE quiz_system;
+USE quiz_system;
+
+-- Users table
+CREATE TABLE users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE,
+    password VARCHAR(50)
+);
+
+-- Quiz table
+CREATE TABLE quizzes (
+    quiz_id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(100)
+);
+
+-- Questions table
+CREATE TABLE questions (
+    question_id INT PRIMARY KEY AUTO_INCREMENT,
+    quiz_id INT,
+    question TEXT,
+    option1 VARCHAR(100),
+    option2 VARCHAR(100),
+    option3 VARCHAR(100),
+    option4 VARCHAR(100),
+    correct_option INT,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id)
+);
+
+-- Results table
+CREATE TABLE results (
+    result_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    quiz_id INT,
+    score INT,
+    total INT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id)
+);
+
+-- Sample data
+INSERT INTO users(username, password) VALUES ('admin','1234');
+
+INSERT INTO quizzes(title) VALUES ('Java Basics');
+
+INSERT INTO questions(quiz_id, question, option1, option2, option3, option4, correct_option) VALUES
+(1,'What is JVM?','Java Virtual Machine','Java Variable Method','Joint Virtual Machine','None',1),
+(1,'Which keyword is used for inheritance?','this','super','extends','implements',3),
+(1,'Which is not primitive type?','int','float','String','char',3);
