@@ -1,0 +1,160 @@
+import javax.swing.*;
+import java.awt.event.*;
+import java.sql.*;
+import java.util.*;
+
+public class QuizFrame extends JFrame {
+    int userId;
+    ArrayList<Question> questions = new ArrayList<>();
+    int current = 0;
+    int score = 0;
+    int timer = 30;
+
+    JLabel qLabel, timerLabel;
+    JRadioButton o1,o2,o3,o4;
+    ButtonGroup group;
+    JButton nextBtn;
+
+    public QuizFrame(int userId) {
+        this.userId = userId;
+
+        setTitle("Quiz");
+        setSize(500,400);
+        setLayout(null);
+
+        qLabel = new JLabel();
+        qLabel.setBounds(20,20,450,30);
+        add(qLabel);
+
+        timerLabel = new JLabel("Time: 30");
+        timerLabel.setBounds(400,20,100,30);
+        add(timerLabel);
+
+        o1 = new JRadioButton();
+        o2 = new JRadioButton();
+        o3 = new JRadioButton();
+        o4 = new JRadioButton();
+
+        o1.setBounds(50,80,400,30);
+        o2.setBounds(50,120,400,30);
+        o3.setBounds(50,160,400,30);
+        o4.setBounds(50,200,400,30);
+
+        add(o1); add(o2); add(o3); add(o4);
+
+        group = new ButtonGroup();
+        group.add(o1); group.add(o2); group.add(o3); group.add(o4);
+
+        nextBtn = new JButton("Next");
+        nextBtn.setBounds(200,260,100,30);
+        add(nextBtn);
+
+        nextBtn.addActionListener(e -> nextQuestion());
+
+        loadQuestions();
+        showQuestion();
+
+        startTimer();
+
+        setVisible(true);
+    }
+
+    void loadQuestions() {
+        try {
+            Connection con = DBConnection.getConnection();
+            Statement st = con.createStatement();
+
+            ResultSet rs = st.executeQuery(
+                "SELECT * FROM questions ORDER BY RAND()"
+            );
+
+            while(rs.next()) {
+                questions.add(new Question(
+                    rs.getString("question"),
+                    rs.getString("option1"),
+                    rs.getString("option2"),
+                    rs.getString("option3"),
+                    rs.getString("option4"),
+                    rs.getInt("correct_option")
+                ));
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    void showQuestion() {
+        if(current < questions.size()) {
+            Question q = questions.get(current);
+            qLabel.setText(q.q);
+            o1.setText(q.o1);
+            o2.setText(q.o2);
+            o3.setText(q.o3);
+            o4.setText(q.o4);
+        } else {
+            finishQuiz();
+        }
+    }
+
+    void nextQuestion() {
+        checkAnswer();
+        current++;
+        group.clearSelection();
+        showQuestion();
+    }
+
+    void checkAnswer() {
+        Question q = questions.get(current);
+
+        if(o1.isSelected() && q.correct == 1) score++;
+        if(o2.isSelected() && q.correct == 2) score++;
+        if(o3.isSelected() && q.correct == 3) score++;
+        if(o4.isSelected() && q.correct == 4) score++;
+    }
+
+    void startTimer() {
+        new Timer(1000, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                timer--;
+                timerLabel.setText("Time: " + timer);
+
+                if(timer <= 0) {
+                    ((Timer)e.getSource()).stop();
+                    finishQuiz();
+                }
+            }
+        }).start();
+    }
+
+    void finishQuiz() {
+        saveResult();
+        new ResultFrame(score, questions.size());
+        dispose();
+    }
+
+    void saveResult() {
+        try {
+            Connection con = DBConnection.getConnection();
+            PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO results(user_id, quiz_id, score, total) VALUES (?,?,?,?)"
+            );
+            ps.setInt(1, userId);
+            ps.setInt(2, 1);
+            ps.setInt(3, score);
+            ps.setInt(4, questions.size());
+            ps.executeUpdate();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    class Question {
+        String q,o1,o2,o3,o4;
+        int correct;
+
+        Question(String q,String o1,String o2,String o3,String o4,int correct) {
+            this.q=q; this.o1=o1; this.o2=o2; this.o3=o3; this.o4=o4;
+            this.correct=correct;
+        }
+    }
+}
