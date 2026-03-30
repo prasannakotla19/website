@@ -1,0 +1,16 @@
+import javax.swing.*;
+
+public class ResultFrame extends JFrame {
+
+    public ResultFrame(int score, int total) {
+        setTitle("Result");
+        setSize(300,200);
+        setLayout(null);
+
+        JLabel result = new JLabel("Score: " + score + "/" + total);
+        result.setBounds(80,50,200,30);
+        add(result);
+
+        setVisible(true);
+    }
+}
